@@ -3,13 +3,15 @@ import kotlin.jvm.internal.PropertyReference0Impl;
 
 import java.io.*;
 import java.util.*;
+import java.io.InputStreamReader;
 
 public class WardDataCleaner {
     // Reads the CSV FILE AT THE GIVEN PATH AND RETURNS A CLEANED LIST OF WARD RECORD
-    public static List<WardRecord> loadAndClean(String csvPath) throws IOException{
+    public static List<WardRecord> loadAndClean(String csvResourceName) throws IOException{
         List<WardRecord> rawRows = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader((new FileReader(csvPath)));){
+        try (BufferedReader reader = new BufferedReader((new InputStreamReader(
+                WardDataCleaner.class.getClassLoader().getResourceAsStream(csvResourceName))))){
             String line = reader.readLine(); // Skips header row
             while((line = reader.readLine()) != null){
                 if (line.isBlank()) continue;
@@ -57,6 +59,9 @@ public class WardDataCleaner {
         String lower = dept.toLowerCase();
         if (lower.contains("paediatric") || lower.contains("pediatric")){
             return "Pediatrics";
+        }
+        if (lower.equals("icu")) {
+            return "ICU";
         }
         return capitalizeWords(dept);
     }
