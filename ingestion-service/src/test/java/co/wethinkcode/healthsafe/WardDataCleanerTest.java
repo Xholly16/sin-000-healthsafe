@@ -29,4 +29,17 @@ public class WardDataCleanerTest {
         assertNull(w02.wing, "Missing wing should be normalised to null");
     }
 
+
+    @Test
+    void paediatricsIsNormalisedToPediatrics() throws Exception {
+        List<WardRecord> wards = WardDataCleaner.loadAndClean("test-wards.csv");
+
+        WardRecord w02 = wards.stream()
+                .filter(w -> w.wardId.equals("W-02"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("Pediatrics", w02.department);
+    }
+
 }
