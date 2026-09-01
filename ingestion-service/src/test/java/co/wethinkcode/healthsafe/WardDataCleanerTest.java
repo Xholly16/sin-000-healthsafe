@@ -73,4 +73,17 @@ public class WardDataCleanerTest {
         assertNull(w03.bedsAvailable, "TBD should become null (placeholder value)");
     }
 
+
+    @Test
+    void validBedsValueIsParsedCorrectly() throws Exception {
+        List<WardRecord> wards = WardDataCleaner.loadAndClean("test-wards.csv");
+
+        WardRecord w01 = wards.stream()
+                .filter(w -> w.wardId.equals("W-01"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(3, w01.bedsAvailable);
+    }
+
 }
