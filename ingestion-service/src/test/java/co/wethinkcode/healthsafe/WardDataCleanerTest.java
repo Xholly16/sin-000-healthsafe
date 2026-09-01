@@ -55,4 +55,22 @@ public class WardDataCleanerTest {
         assertEquals("ICU", w03.department);
     }
 
+
+    @Test
+    void invalidBedsValuesBecomeNull() throws Exception {
+        List<WardRecord> wards = WardDataCleaner.loadAndClean("test-wards.csv");
+
+        WardRecord w02 = wards.stream()
+                .filter(w -> w.wardId.equals("W-02"))
+                .findFirst()
+                .orElseThrow();
+        WardRecord w03 = wards.stream()
+                .filter(w -> w.wardId.equals("W-03"))
+                .findFirst()
+                .orElseThrow();
+
+        assertNull(w02.bedsAvailable, "-1 should become null (negative beds invalid)");
+        assertNull(w03.bedsAvailable, "TBD should become null (placeholder value)");
+    }
+
 }
