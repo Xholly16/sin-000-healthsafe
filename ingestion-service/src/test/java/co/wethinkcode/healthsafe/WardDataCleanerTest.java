@@ -42,4 +42,17 @@ public class WardDataCleanerTest {
         assertEquals("Pediatrics", w02.department);
     }
 
+
+    @Test
+    void icuIsKeptAsUppercaseAcronym() throws Exception {
+        List<WardRecord> wards = WardDataCleaner.loadAndClean("test-wards.csv");
+
+        WardRecord w03 = wards.stream()
+                .filter(w -> w.wardId.equals("W-03"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("ICU", w03.department);
+    }
+
 }
