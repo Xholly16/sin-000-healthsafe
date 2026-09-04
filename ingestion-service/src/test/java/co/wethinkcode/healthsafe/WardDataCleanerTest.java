@@ -86,4 +86,5 @@ public class WardDataCleanerTest {
         assertEquals(3, w01.bedsAvailable);
     }
 
+
 }
