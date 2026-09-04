@@ -22,4 +22,19 @@ public class WardLookupTest {
         assertTrue(result.isPresent(), "Should find W-01 even when searched with lowercase id");
         assertEquals("W-01", result.get().wardId);
     }
+
+
+    @Test
+    void returnsEmptyWhenWardIdNotFound() {
+        WardRecord w1 = new WardRecord();
+        w1.wardId = "W-01";
+
+        List<WardRecord> wards = List.of(w1);
+
+        Optional<WardRecord> result = WardLookup.findById(wards, "W-99");
+
+        assertTrue(result.isEmpty(), "Should return empty Optional when id doesn't exist");
+    }
+
+
 }
