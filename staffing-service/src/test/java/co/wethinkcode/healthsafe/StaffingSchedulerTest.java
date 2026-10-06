@@ -3,13 +3,14 @@ package co.wethinkcode.healthsafe;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+class StaffingSchedulerTest {
 
-public class StaffingSchedulerTest {
+    private final StaffingScheduler scheduler = new StaffingScheduler();
 
     @Test
-    void lowAlertLevelRequiresOneDoctor() {
-        int doctors = StaffingScheduler.doctorsRequired(0);
-        assertEquals(1, doctors);
+    void lowAlertLevelsNeedOneDoctor() {
+        assertEquals(1, scheduler.doctorsRequired(0));
+        assertEquals(1, scheduler.doctorsRequired(2));
     }
 
     @Test
