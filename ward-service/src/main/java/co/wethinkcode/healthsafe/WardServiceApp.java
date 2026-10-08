@@ -1,9 +1,12 @@
 package co.wethinkcode.healthsafe;
 
+import co.wethinkcode.healthsafe.mq.StaffingEventSubscriber;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
 
+import javax.jms.JMSException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,6 +21,7 @@ public class WardServiceApp {
 
         ObjectMapper mapper = new ObjectMapper();
         List<WardRecord> wards = fetchWardsFromIngestion(mapper);
+        StaffingEventSubscriber staffingEvents = startSubscriber();
 
         Javalin app = Javalin.create(config -> {
             config.jsonMapper(new JavalinJackson(mapper));
@@ -36,10 +40,32 @@ public class WardServiceApp {
             }
         });
 
-
+        // Latest staffing event this service heard on staffing-events-topic.
+        app.get("/wards/{id}/staffing", ctx -> {
+            String id = ctx.pathParam("id");
+            if (staffingEvents == null) {
+                ctx.status(503).json(Map.of("error", "Not connected to the message broker"));
+                return;
+            }
+            Optional<JsonNode> latest = staffingEvents.latestFor(id);
+            if (latest.isPresent()) {
+                ctx.json(latest.get());
+            } else {
+                ctx.status(404).json(Map.of("error", "No staffing event received yet for ward: " + id));
+            }
+        });
     }
 
-    private static List<WardRecord> fetchWardsFromIngestion(ObjectMapper mapper) throws Exception{
+    private static StaffingEventSubscriber startSubscriber() {
+        try {
+            return new StaffingEventSubscriber();
+        } catch (JMSException e) {
+            System.err.println("WARNING: could not connect to the broker, staffing events disabled: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static List<WardRecord> fetchWardsFromIngestion(ObjectMapper mapper) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:7030/wards"))
@@ -47,9 +73,7 @@ public class WardServiceApp {
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        return mapper.readValue(response.body(),mapper.getTypeFactory()
+        return mapper.readValue(response.body(), mapper.getTypeFactory()
                 .constructCollectionType(List.class, WardRecord.class));
-
     }
 }
-
