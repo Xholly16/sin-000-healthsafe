@@ -58,38 +58,71 @@ out for (and handle) at least:
 - **Naming/spelling variants** for the same thing (e.g. regional spelling
   differences, synonyms)
 
+## What the cleaner does
+
+Implemented in `WardDataCleaner`. Every change that throws data away is explained in
+the record's `notes` field; rows that needed no changes have `"notes": null`.
+
+- IDs are trimmed and upper-cased (`w-05` becomes `W-05`).
+- Padding and double spaces are removed, and wing and department names are Title Cased.
+- Regional spellings are unified: `Paediatrics` and `Pediatrics` both become
+  `Pediatrics` (so the README example above shows the idea, not the exact spelling),
+  and `icu` becomes `ICU`.
+- `bedsAvailable` becomes `null` with a note when the value is blank or a placeholder
+  (`N/A`, `TBD`, `unknown`), non-numeric (`five`), negative, or unrealistic (over 100).
+- A missing wing becomes `null` with a note.
+- Rows with the same ward ID are merged: the first non-empty value of each field wins,
+  the notes from every row are kept, and a `Merged duplicate rows for <id>` note is added.
+
+This CSV has no date or flag columns, so those items from the list above do not apply to it.
+
+## Endpoints
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/health` | `OK` |
+| GET | `/wards` | the cleaned ward records as JSON |
+
 ## Project structure
 
-```
+~~~
 ingestion-service/
 ├── pom.xml
-└── src/main/
-    ├── java/co/wethinkcode/healthsafe/IngestionServiceApp.java
-    └── resources/wards-outdated.csv
-```
+└── src/
+    ├── main/
+    │   ├── java/co/wethinkcode/healthsafe/
+    │   │   ├── IngestionServiceApp.java
+    │   │   ├── WardDataCleaner.java
+    │   │   └── WardRecord.java
+    │   └── resources/wards-outdated.csv
+    └── test/
+        ├── java/co/wethinkcode/healthsafe/
+        │   ├── WardDataCleanerTest.java
+        │   └── WardDataCleanerNotesTest.java
+        └── resources/
+            ├── test-wards.csv
+            └── test-notes.csv
+~~~
 
 ## Build
 
-```
+~~~
 mvn package
-```
+~~~
 
 ## Run
 
-```
+~~~
 java -jar target/ingestion-service.jar
-```
+~~~
 
-Listens on port `7030`. Currently just exposes `/health` — the actual CSV
-parsing/cleaning logic is a TODO.
+Listens on port `7030`. Start this service first: `ward-service` fetches the cleaned
+wards from it at startup.
 
 ## Test
 
-No automated tests yet. Manually verify it's up:
+~~~
+mvn test
+~~~
 
-```
-curl http://localhost:7030/health   # -> OK
-```
-
-To add real tests, add JUnit 5 + the Surefire plugin to `pom.xml`, put tests under
-`src/test/java/co/wethinkcode/healthsafe/`, and run `mvn test`.
+13 JUnit 5 tests cover the cleaning rules and the notes.
