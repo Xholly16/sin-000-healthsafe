@@ -1,8 +1,8 @@
 package co.wethinkcode.healthsafe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,29 +12,35 @@ public class AlertLevelServiceApp {
     private static final AtomicInteger currentLevel = new AtomicInteger(0);
 
     public static void main(String[] args) {
-        Javalin app = Javalin.create(config ->{
-            config.jsonMapper(new JavalinJackson(new com.fasterxml.jackson.databind.ObjectMapper()));
-        } ).start(7032);
+        Javalin app = Javalin.create(config -> {
+            config.jsonMapper(new JavalinJackson(new ObjectMapper()));
+        }).start(7032);
 
         app.get("/health", ctx -> ctx.result("OK"));
 
-        //Read the current Emergency Status
-        app.get("/alert-level", ctx-> {
-            ctx.json(Map.of("level", currentLevel.get()));
-        });
+        // Read the current Emergency Status
+        app.get("/alert-level", ctx -> ctx.json(Map.of("level", currentLevel.get())));
 
-        app.post("/alert-level", ctx ->{
-            Map<?, ?> body = ctx.bodyAsClass(Map.class);
-            int newLevel = ((Number) body.get("level")).intValue();
-
-            if (newLevel < 0 || newLevel > 8) {
-                ctx.status(400).json(Map.of("error", "level must be between 0 and 8"));
+        // Change the Emergency Status
+        app.post("/alert-level", ctx -> {
+            Map<?, ?> body;
+            try {
+                body = ctx.bodyAsClass(Map.class);
+            } catch (Exception e) {
+                ctx.status(400).json(Map.of("error", "Body must be valid JSON"));
                 return;
             }
+
+            int newLevel;
+            try {
+                newLevel = AlertLevelValidator.parse(body);
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("error", e.getMessage()));
+                return;
+            }
+
             currentLevel.set(newLevel);
-            ctx.json(Map.of("level", currentLevel.get()));
+            ctx.json(Map.of("level", newLevel));
         });
-        // TODO (Tracks the hospital Emergency Status (0-8, 8 = full Code Blue).)
-        // Add domain endpoints for alert-level-service here.
     }
 }
