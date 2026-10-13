@@ -49,16 +49,23 @@ from their own directories at the project root).
 
 ## Test
 
-```
-docker compose ps          # confirm the broker container is healthy
-```
+~~~
+docker compose ps          # confirm the broker container is up
+~~~
 
-Once the TODOs below are implemented, verify end-to-end by publishing a message from
-`staffing-service` and confirming the consumer(s) receive it — e.g. via logs, or by
-watching the topic in the web console.
+End-to-end check for the topic, with `ingestion-service`, `ward-service`,
+`alert-level-service` and `staffing-service` running:
 
-## TODO
+1. Publish an event:
+   `curl -X POST http://localhost:7033/staffing/W-01/events`
+2. The `ward-service` terminal prints `Received staffing event for W-01: ...`.
+3. `curl http://localhost:7031/wards/W-01/staffing` returns that event.
+4. http://localhost:8161/admin/topics.jsp shows `staffing-events-topic` with 1 consumer.
 
-- Add `activemq-client` publish logic to `staffing-service` on its stage/state-change endpoint.
-- Add `activemq-client` subscriber logic to consumer service(s) above, replacing any
-  direct synchronous calls to `staffing-service`.
+## Status
+
+- Publisher: `staffing-service` (`StaffingEventPublisher`, called from `POST /staffing/{wardId}/events`).
+- Subscriber: `ward-service` (`StaffingEventSubscriber`, exposed through `GET /wards/{id}/staffing`).
+- The same broker also carries `equipment-failure-queue`; see `../equipment-alert-service`.
+- The topic subscription is not durable: a subscriber only receives events published
+  while it is running.

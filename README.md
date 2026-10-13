@@ -28,8 +28,7 @@ cleanup through synchronous REST calls to asynchronous MQ decoupling and alertin
 Plus [`common/`](common) (no port) — the shared ActiveMQ broker and MQ config notes
 for `staffing-events-topic`: Staffing updates are broadcast as Events via the broker to decouple the frontend from the Staffing Service.
 
-**Status:** scaffold only — build files, Javalin bootstrap, and TODOs are in place; no
-business logic has been implemented yet.
+**Status:** all four stages are implemented and tested; see each service README for its endpoints and behaviour.
 
 ## Your task
 
@@ -147,34 +146,23 @@ cd equipment-alert-service && mvn package && java -jar target/equipment-alert-se
 
 ## Test
 
-No automated tests exist yet (this is a scaffold). Each running service exposes
-`/health`, so sanity-check manually:
+Each module is tested on its own: `cd <module> && mvn test`.
 
-```
-curl http://localhost:7030/health   # -> OK
-```
+| Module | Automated tests |
+|---|---|
+| `ingestion-service` | 13 (cleaning rules and notes) |
+| `ward-service` | `WardLookupTest` (ward lookup) |
+| `alert-level-service` | 7 (input validation) |
+| `staffing-service` | 4 (doctors-on-call table) |
+| `equipment-alert-service` | none; checked manually |
 
-To add real tests to a module, add JUnit 5 and Surefire to its `pom.xml`:
+Whole-system check. Start the broker, then the services in this order: ingestion,
+ward, alert-level, staffing, equipment-alert. Then:
 
-```xml
-<dependency>
-  <groupId>org.junit.jupiter</groupId>
-  <artifactId>junit-jupiter</artifactId>
-  <version>5.10.2</version>
-  <scope>test</scope>
-</dependency>
-```
-
-```xml
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-surefire-plugin</artifactId>
-  <version>3.2.5</version>
-</plugin>
-```
-
-then add tests under that module's `src/test/java/...` and run:
-
-```
-mvn test
-```
+~~~
+curl http://localhost:7033/staffing/W-01
+curl -X POST http://localhost:7033/staffing/W-01/events
+curl http://localhost:7031/wards/W-01/staffing
+curl -X POST -H "Content-Type: application/json" -d '{"equipment":"Ventilator"}' http://localhost:7031/wards/W-01/equipment-failure
+curl http://localhost:7034/alerts
+~~~
