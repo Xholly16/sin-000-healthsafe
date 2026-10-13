@@ -1,5 +1,4 @@
 package co.wethinkcode.healthsafe;
-import kotlin.jvm.internal.PropertyReference0Impl;
 
 import java.io.*;
 import java.util.*;
@@ -34,7 +33,7 @@ public class WardDataCleaner {
             }
 
             }
-        return mergeDuplicatates(rawRows);
+        return mergeDuplicates(rawRows);
     }
 
     private static String clean(String value){
@@ -97,7 +96,7 @@ public class WardDataCleaner {
         }
     }
 
-    private static List<WardRecord> mergeDuplicatates(List<WardRecord> rows){
+    private static List<WardRecord> mergeDuplicates(List<WardRecord> rows){
         Map<String,WardRecord> merged = new LinkedHashMap<>();
 
         for (WardRecord row: rows){
