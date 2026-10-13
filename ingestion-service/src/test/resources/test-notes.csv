@@ -1,0 +1,8 @@
+ward_id,wing,department,beds_available
+W-01,East Wing,Cardiology,3
+W-02,West Wing,Oncology,five
+W-03,,ICU,N/A
+W-04,North Wing,Radiology,-1
+W-05,South Wing,Maternity,2023
+W-06,East Wing,Cardiology,4
+w-06,east wing,cardiology,five
