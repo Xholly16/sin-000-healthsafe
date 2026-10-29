@@ -166,3 +166,6 @@ curl http://localhost:7031/wards/W-01/staffing
 curl -X POST -H "Content-Type: application/json" -d '{"equipment":"Ventilator"}' http://localhost:7031/wards/W-01/equipment-failure
 curl http://localhost:7034/alerts
 ~~~
+
+## Verification code:
+WTC-BYQLE3JQ
